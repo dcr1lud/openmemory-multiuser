@@ -146,7 +146,7 @@ export default function MemoriesPage() {
     return p.includes('medium') || p.includes('normal');
   };
 
-  // Get priority styling
+  // Get priority styling - now ALWAYS returns a style with flag icon
   const getPriorityStyle = (priority?: string) => {
     if (!priority) return null;
     
@@ -168,7 +168,14 @@ export default function MemoriesPage() {
       };
     }
     
-    return null;
+    // Default style for all other priorities (low, custom, etc.) - includes flag icon
+    return {
+      borderColor: '',
+      bgColor: '',
+      textColor: 'text-gray-300',
+      badgeBg: 'bg-gray-700',
+      icon: <Flag className="h-3 w-3" />
+    };
   };
 
   const filteredMemories = memories.filter(memory =>
@@ -282,7 +289,7 @@ export default function MemoriesPage() {
                 <div
                   key={memory.id}
                   className={`bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors ${
-                    priorityStyle ? `border-l-4 ${priorityStyle.borderColor}` : ''
+                    priorityStyle?.borderColor ? `border-l-4 ${priorityStyle.borderColor}` : ''
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -332,16 +339,18 @@ export default function MemoriesPage() {
                           </div>
                         )}
 
-                        {/* Priority Badge */}
-                        {metadata?.priority && (
+                        {/* Priority Badge - now always shows flag icon */}
+                        {metadata?.priority && priorityStyle && (
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium gap-1 ${
-                              priorityStyle
-                                ? `${priorityStyle.badgeBg} ${priorityStyle.textColor} border border-${priorityStyle.borderColor.split('-')[1]}-500/30`
-                                : 'bg-gray-700 text-gray-300 border border-gray-600'
+                              priorityStyle.badgeBg
+                            } ${priorityStyle.textColor} border ${
+                              priorityStyle.borderColor 
+                                ? `border-${priorityStyle.borderColor.split('-')[1]}-500/30`
+                                : 'border-gray-600'
                             }`}
                           >
-                            {priorityStyle?.icon}
+                            {priorityStyle.icon}
                             {metadata.priority}
                           </span>
                         )}
