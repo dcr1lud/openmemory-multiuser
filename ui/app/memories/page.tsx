@@ -7,11 +7,12 @@ import {
   Plus, 
   Search, 
   Trash2, 
-  Archive, 
   Calendar,
   User as UserIcon,
   RefreshCw,
-  LogOut
+  LogOut,
+  Tag as TagIcon,
+  Flag
 } from 'lucide-react';
 import apiService, { Memory, User, PaginatedResponse } from '@/services/api';
 
@@ -131,6 +132,45 @@ export default function MemoriesPage() {
     return { initials, name, color };
   };
 
+  // Helper function to check if priority is high/urgent
+  const isHighPriority = (priority?: string): boolean => {
+    if (!priority) return false;
+    const p = priority.toLowerCase();
+    return p.includes('high') || p.includes('urgent') || p.includes('critical') || p.includes('important');
+  };
+
+  // Helper function to check if priority is medium
+  const isMediumPriority = (priority?: string): boolean => {
+    if (!priority) return false;
+    const p = priority.toLowerCase();
+    return p.includes('medium') || p.includes('normal');
+  };
+
+  // Get priority styling
+  const getPriorityStyle = (priority?: string) => {
+    if (!priority) return null;
+    
+    if (isHighPriority(priority)) {
+      return {
+        borderColor: 'border-red-500',
+        bgColor: 'bg-red-500/10',
+        textColor: 'text-red-400',
+        badgeBg: 'bg-red-500/20',
+        icon: <Flag className="h-3 w-3" />
+      };
+    } else if (isMediumPriority(priority)) {
+      return {
+        borderColor: 'border-yellow-500',
+        bgColor: 'bg-yellow-500/10',
+        textColor: 'text-yellow-400',
+        badgeBg: 'bg-yellow-500/20',
+        icon: <Flag className="h-3 w-3" />
+      };
+    }
+    
+    return null;
+  };
+
   const filteredMemories = memories.filter(memory =>
     memory.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -235,13 +275,19 @@ export default function MemoriesPage() {
           <div className="space-y-4">
             {filteredMemories.map((memory) => {
               const userDisplay = getUserDisplay(memory);
+              const metadata = memory.metadata;
+              const priorityStyle = metadata?.priority ? getPriorityStyle(metadata.priority) : null;
+              
               return (
                 <div
                   key={memory.id}
-                  className="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors"
+                  className={`bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors ${
+                    priorityStyle ? `border-l-4 ${priorityStyle.borderColor}` : ''
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
+                      {/* User and Date Info */}
                       <div className="flex items-center space-x-3 mb-2">
                         <div
                           className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-medium"
@@ -256,8 +302,53 @@ export default function MemoriesPage() {
                           {formatDate(memory.created_at)}
                         </span>
                       </div>
-                      <p className="text-gray-100">{memory.content}</p>
+
+                      {/* Category Badge */}
+                      {metadata?.category && (
+                        <div className="mb-2">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                            {metadata.category}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Memory Content */}
+                      <p className="text-gray-100 mb-3">{memory.content}</p>
+
+                      {/* Tags and Priority Row */}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {/* Tag Chips */}
+                        {metadata?.tags && metadata.tags.length > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {metadata.tags.map((tag, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-700 text-gray-300 border border-gray-600"
+                              >
+                                <TagIcon className="h-3 w-3 mr-1" />
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Priority Badge */}
+                        {metadata?.priority && (
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium gap-1 ${
+                              priorityStyle
+                                ? `${priorityStyle.badgeBg} ${priorityStyle.textColor} border border-${priorityStyle.borderColor.split('-')[1]}-500/30`
+                                : 'bg-gray-700 text-gray-300 border border-gray-600'
+                            }`}
+                          >
+                            {priorityStyle?.icon}
+                            {metadata.priority}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    
+                    {/* Delete Button */}
                     <button
                       onClick={() => handleDeleteMemory(memory.id)}
                       className="ml-4 p-2 text-gray-400 hover:text-red-400 transition-colors"

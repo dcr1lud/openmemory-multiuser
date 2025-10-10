@@ -1,4 +1,6 @@
 # api/app/mcp_server.py
+# Updated to support metadata (category, tags, priority) with AI-focused continuity
+
 import json
 import logging
 import asyncio
@@ -313,13 +315,34 @@ async def process_mcp_request(method: str, params: dict, request_id: Any, user_u
                 "tools": [
                     {
                         "name": "add_memory",
-                        "description": "Add a new memory. This method is called everytime the user informs anything about themselves, their preferences, or anything that has any relevant information which can be useful in the future conversation.",
+                        "description": "Store a memory to maintain continuity across conversations.",
                         "inputSchema": {
                             "type": "object",
                             "properties": {
                                 "text": {
                                     "type": "string",
-                                    "description": "The text to store as a memory"
+                                    "description": "What you want to remember"
+                                },
+                                "metadata": {
+                                    "type": "object",
+                                    "description": "Optional metadata to organize memories",
+                                    "properties": {
+                                        "category": {
+                                            "type": "string",
+                                            "description": "Primary category to organize this memory"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "description": "Tags for flexible organization",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "priority": {
+                                            "type": "string",
+                                            "description": "Priority level for this memory"
+                                        }
+                                    }
                                 }
                             },
                             "required": ["text"]
@@ -420,8 +443,21 @@ async def process_mcp_request(method: str, params: dict, request_id: Any, user_u
 
 
 async def handle_add_memory(user_uuid: str, user_id_str: str, app_uuid: str, args: Dict[str, Any]) -> str:
-    """Handle add_memory tool call"""
+    """Handle add_memory tool call with metadata support (category, tags, priority)"""
     text = args.get("text")
+    metadata = args.get("metadata", {})
+    
+    # Parse metadata if it's a JSON string
+    if isinstance(metadata, str):
+        try:
+            metadata = json.loads(metadata)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse metadata string: {metadata}")
+            metadata = {}
+    
+    logger.info(f"DEBUG: Received args: {args}")
+    logger.info(f"DEBUG: Extracted metadata: {metadata}")
+    
     if not text:
         return "Error: 'text' parameter is required"
     
@@ -438,6 +474,7 @@ async def handle_add_memory(user_uuid: str, user_id_str: str, app_uuid: str, arg
             user_id=user_uuid,             # Use UUID foreign key
             app_id=app_uuid,               # Use UUID foreign key  
             content=text,                  # Use 'content' column, not 'memory'
+            metadata_=metadata,            # Store metadata in the database
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )
@@ -450,17 +487,36 @@ async def handle_add_memory(user_uuid: str, user_id_str: str, app_uuid: str, arg
             memory_client = get_memory_client()
             if memory_client:
                 # Add to vector store using string user_id
+                vector_metadata = {
+                    "app_id": str(app_uuid),
+                    **metadata  # Include user-provided metadata in vector store
+                }
+                
                 memory_client.add(
                     messages=[{"role": "user", "content": text}],
                     user_id=user_id_str,  # Vector store expects string user_id
-                    metadata={"app_id": str(app_uuid)},
+                    metadata=vector_metadata,
                 )
-                logger.info(f"Added memory to vector store for user {user_id_str}")
+                logger.info(f"Added memory to vector store for user {user_id_str} with metadata: {metadata}")
         except Exception as e:
             logger.warning(f"Failed to add to vector store: {e}")
             # Continue anyway - database entry was successful
         
-        return f"Memory stored successfully. ID: {memory.id}"
+        # Format response message
+        response_msg = f"Memory stored successfully. ID: {memory.id}"
+        
+        # Include category, tags, and priority in response if provided
+        if "category" in metadata and metadata["category"]:
+            response_msg += f"\nCategory: {metadata['category']}"
+        
+        if "tags" in metadata and metadata["tags"]:
+            tags_str = ", ".join(metadata["tags"])
+            response_msg += f"\nTags: {tags_str}"
+        
+        if "priority" in metadata and metadata["priority"]:
+            response_msg += f"\nPriority: {metadata['priority']}"
+        
+        return response_msg
         
     except Exception as e:
         db.rollback()
@@ -495,7 +551,23 @@ async def handle_search_memories(user_uuid: str, user_id_str: str, app_uuid: str
                     # Vector store returns 'memory' key, but we want 'content'
                     memory_text = result.get("memory", result.get("content", ""))
                     score = result.get("score", 0)
-                    formatted_results.append(f"{i}. {memory_text} (relevance: {score:.2f})")
+                    metadata = result.get("metadata", {})
+                    
+                    result_str = f"{i}. {memory_text} (relevance: {score:.2f})"
+                    
+                    # Include category, tags, and priority if present
+                    metadata_parts = []
+                    if "category" in metadata and metadata["category"]:
+                        metadata_parts.append(f"Category: {metadata['category']}")
+                    if "tags" in metadata and metadata["tags"]:
+                        metadata_parts.append(f"Tags: {', '.join(metadata['tags'])}")
+                    if "priority" in metadata and metadata["priority"]:
+                        metadata_parts.append(f"Priority: {metadata['priority']}")
+                    
+                    if metadata_parts:
+                        result_str += f" [{' | '.join(metadata_parts)}]"
+                    
+                    formatted_results.append(result_str)
                 
                 return f"Found {len(results)} memories:\n" + "\n".join(formatted_results)
             else:
@@ -514,7 +586,22 @@ async def handle_search_memories(user_uuid: str, user_id_str: str, app_uuid: str
         if memories:
             formatted_results = []
             for i, memory in enumerate(memories, 1):
-                formatted_results.append(f"{i}. {memory.content}")  # Use 'content' attribute
+                result_str = f"{i}. {memory.content}"
+                
+                # Include category, tags, and priority from metadata if present
+                metadata = memory.metadata_ if isinstance(memory.metadata_, dict) else (json.loads(memory.metadata_) if memory.metadata_ else {})
+                metadata_parts = []
+                if metadata and "category" in metadata:
+                    metadata_parts.append(f"Category: {metadata['category']}")
+                if metadata and "tags" in metadata:
+                    metadata_parts.append(f"Tags: {', '.join(metadata['tags'])}")
+                if metadata and "priority" in metadata:
+                    metadata_parts.append(f"Priority: {metadata['priority']}")
+                
+                if metadata_parts:
+                    result_str += f" [{' | '.join(metadata_parts)}]"
+                
+                formatted_results.append(result_str)
             
             return f"Found {len(memories)} memories:\n" + "\n".join(formatted_results)
         else:
@@ -540,7 +627,22 @@ async def handle_list_memories(user_uuid: str, user_id_str: str, app_uuid: str, 
         formatted_results = []
         for i, memory in enumerate(memories, 1):
             created_at = memory.created_at.strftime("%Y-%m-%d %H:%M:%S")
-            formatted_results.append(f"{i}. [{created_at}] {memory.content}")  # Use 'content' attribute
+            result_str = f"{i}. [{created_at}] {memory.content}"
+            
+            # Include category, tags, and priority from metadata if present
+            metadata = memory.metadata_ if isinstance(memory.metadata_, dict) else (json.loads(memory.metadata_) if memory.metadata_ else {})
+            metadata_parts = []
+            if metadata and "category" in metadata:
+                metadata_parts.append(f"Category: {metadata['category']}")
+            if metadata and "tags" in metadata:
+                metadata_parts.append(f"Tags: {', '.join(metadata['tags'])}")
+            if metadata and "priority" in metadata:
+                metadata_parts.append(f"Priority: {metadata['priority']}")
+            
+            if metadata_parts:
+                result_str += f" [{' | '.join(metadata_parts)}]"
+            
+            formatted_results.append(result_str)
         
         return f"Your {len(memories)} most recent memories:\n" + "\n".join(formatted_results)
         

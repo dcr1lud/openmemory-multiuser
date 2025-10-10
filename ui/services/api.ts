@@ -46,6 +46,13 @@ export interface User {
   last_active?: string;
 }
 
+export interface MemoryMetadata {
+  category?: string;
+  tags?: string[];
+  priority?: string;
+  [key: string]: any; // Allow additional custom metadata
+}
+
 export interface Memory {
   id: string;
   content: string;
@@ -55,6 +62,7 @@ export interface Memory {
   created_at: string;
   updated_at?: string;
   state: 'active' | 'archived' | 'deleted';
+  metadata?: MemoryMetadata; // Matches API JSON response (uses column name, not Python attribute)
 }
 
 export interface PaginatedResponse<T> {
