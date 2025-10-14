@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Brain, 
+import {
+  Brain,
   Database,
-  Users,
   Activity,
   Clock,
-  Archive,
   TrendingUp,
   Calendar,
   ChevronRight,
@@ -41,17 +39,34 @@ export default function DashboardPage() {
 
   const checkAuth = () => {
     if (typeof window === 'undefined') return;
-    
-    const apiKey = sessionStorage.getItem('api_key') || localStorage.getItem('api_key');
-    const userId = sessionStorage.getItem('user_id') || localStorage.getItem('user_id');
-    const userName = sessionStorage.getItem('user_name') || localStorage.getItem('user_name');
 
-    if (!apiKey) {
-      router.push('/login');
-      return;
+    const authType = sessionStorage.getItem('auth_type') || localStorage.getItem('auth_type') || 'api_key';
+
+    if (authType === 'keycloak') {
+      // Check Keycloak authentication
+      const accessToken = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+      const userId = sessionStorage.getItem('user_id') || localStorage.getItem('user_id');
+      const userName = sessionStorage.getItem('user_name') || localStorage.getItem('user_name');
+
+      if (!accessToken || !userId) {
+        router.push('/login');
+        return;
+      }
+
+      setCurrentUser({ userId, userName, authType: 'keycloak' });
+    } else {
+      // Check API key authentication
+      const apiKey = sessionStorage.getItem('api_key') || localStorage.getItem('api_key');
+      const userId = sessionStorage.getItem('user_id') || localStorage.getItem('user_id');
+      const userName = sessionStorage.getItem('user_name') || localStorage.getItem('user_name');
+
+      if (!apiKey) {
+        router.push('/login');
+        return;
+      }
+
+      setCurrentUser({ userId, userName, authType: 'api_key' });
     }
-
-    setCurrentUser({ userId, userName });
   };
 
   const fetchDashboardData = async () => {
@@ -69,7 +84,7 @@ export default function DashboardPage() {
 
       // Calculate stats
       const recentMemories = memoriesResponse.items.slice(0, 5);
-      
+
       setStats({
         totalMemories: memoriesResponse.total || 0,
         activeMemories: memoriesResponse.items.filter(m => m.state === 'active').length,
@@ -89,7 +104,7 @@ export default function DashboardPage() {
       const now = new Date();
       const diffMs = now.getTime() - date.getTime();
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      
+
       if (diffHours < 1) {
         const diffMins = Math.floor(diffMs / (1000 * 60));
         return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
@@ -141,7 +156,7 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <Database className="h-8 w-8 text-blue-400" />
@@ -162,20 +177,11 @@ export default function DashboardPage() {
 
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <div className="flex items-center justify-between mb-4">
-                  <Users className="h-8 w-8 text-purple-400" />
-                  <span className="text-xs text-gray-500 uppercase tracking-wider">Users</span>
-                </div>
-                <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
-                <div className="text-sm text-gray-400 mt-1">Active Users</div>
-              </div>
-
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <div className="flex items-center justify-between mb-4">
                   <TrendingUp className="h-8 w-8 text-yellow-400" />
-                  <span className="text-xs text-gray-500 uppercase tracking-wider">Growth</span>
+                  <span className="text-xs text-gray-500 uppercase tracking-wider">Recent</span>
                 </div>
                 <div className="text-3xl font-bold text-white">
-                  {stats.totalMemories > 0 ? '+' : ''}{stats.recentMemories.length}
+                  {stats.recentMemories.length}
                 </div>
                 <div className="text-sm text-gray-400 mt-1">Recent Memories</div>
               </div>
@@ -196,7 +202,7 @@ export default function DashboardPage() {
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
                   </button>
-                  
+
                   <button
                     onClick={() => router.push('/memories?create=true')}
                     className="w-full flex items-center justify-between p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
@@ -204,17 +210,6 @@ export default function DashboardPage() {
                     <div className="flex items-center space-x-3">
                       <Brain className="h-5 w-5 text-green-400" />
                       <span className="text-white">Create New Memory</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </button>
-
-                  <button
-                    onClick={() => router.push('/apps')}
-                    className="w-full flex items-center justify-between p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Archive className="h-5 w-5 text-purple-400" />
-                      <span className="text-white">Manage Apps</span>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
                   </button>

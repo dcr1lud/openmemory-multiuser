@@ -1,8 +1,8 @@
 // ui/services/api.ts
 import axios from 'axios';
 
-// Hardcode the API URL since environment variables aren't working properly
-const API_BASE_URL = 'http://mem-lab.duckdns.org:8765';
+// Use environment variable or fallback to hardcoded URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Create axios instance with auth interceptor
 const api = axios.create({
@@ -12,11 +12,23 @@ const api = axios.create({
 // Add auth header to all requests
 api.interceptors.request.use(
   (config) => {
-    const apiKey = sessionStorage.getItem('api_key');
-    if (apiKey) {
-      config.headers['Authorization'] = `Bearer ${apiKey}`;
-      config.headers['X-API-Key'] = apiKey;
+    const authType = sessionStorage.getItem('auth_type') || 'api_key';
+
+    if (authType === 'keycloak') {
+      // Use Keycloak JWT token
+      const accessToken = sessionStorage.getItem('access_token');
+      if (accessToken) {
+        config.headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+    } else {
+      // Use API key authentication
+      const apiKey = sessionStorage.getItem('api_key');
+      if (apiKey) {
+        config.headers['Authorization'] = `Bearer ${apiKey}`;
+        config.headers['X-API-Key'] = apiKey;
+      }
     }
+
     return config;
   },
   (error) => {
@@ -153,7 +165,7 @@ class ApiService {
     for (let i = 0; i < userId.length; i++) {
       hash = userId.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
+
     // Convert to HSL with good saturation and lightness
     const hue = Math.abs(hash) % 360;
     return `hsl(${hue}, 70%, 50%)`;

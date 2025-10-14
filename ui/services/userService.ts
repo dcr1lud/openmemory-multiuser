@@ -15,20 +15,20 @@ const transformApiUser = (apiUser: any): User => ({
 
 export const loadUsersFromAPI = async (dispatch: Dispatch) => {
   dispatch(setProfileLoading());
-  
+
   try {
     // First, try to get users from the API
     const response = await fetch(`${API_BASE_URL}/api/v1/users`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const apiUsers = await response.json();
-    
+
     // Transform API users to our format
     const users: User[] = apiUsers.map(transformApiUser);
-    
+
     // If we have users, set them
     if (users.length > 0) {
       dispatch(setAvailableUsers(users));
@@ -38,7 +38,7 @@ export const loadUsersFromAPI = async (dispatch: Dispatch) => {
       dispatch(setAvailableUsers([]));
       dispatch(setProfileSuccess());
     }
-    
+
   } catch (error) {
     console.error('Failed to load users from API:', error);
     
