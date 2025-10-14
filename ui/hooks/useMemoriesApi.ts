@@ -258,9 +258,9 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         categories: item.categories as Category[],
         client: 'api',
         app_name: item.app_name,
-        user_id: item.user_id || '',
-        user_name: item.user_name || '',
-        user_display_name: item.user_display_name || ''
+        user_id: user_id,      // Use current user's ID
+        user_name: '',         // Will be populated by user context
+        user_display_name: ''  // Will be populated by user context
       }));
 
       setIsLoading(false);
