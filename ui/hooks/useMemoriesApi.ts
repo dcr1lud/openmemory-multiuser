@@ -257,7 +257,10 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         metadata: item.metadata_,
         categories: item.categories as Category[],
         client: 'api',
-        app_name: item.app_name
+        app_name: item.app_name,
+        user_id: item.user_id || '',
+        user_name: item.user_name || '',
+        user_display_name: item.user_display_name || ''
       }));
 
       setIsLoading(false);

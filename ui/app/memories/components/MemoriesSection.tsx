@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Category, Client } from "../../../components/types";
-import { MemoryTable } from "./MemoryTable";
+import MemoryTable from "./MemoryTable";
 import { MemoryPagination } from "./MemoryPagination";
 import { CreateMemoryDialog } from "./CreateMemoryDialog";
 import { PageSizeSelector } from "./PageSizeSelector";
@@ -61,6 +61,41 @@ export function MemoriesSection() {
     router.push(`?${params.toString()}`);
   };
 
+  const handleDelete = async (id: string) => {
+    // TODO: Implement delete functionality
+    console.log("Delete memory:", id);
+  };
+
+  const handleRefresh = () => {
+    // Reload memories by calling the existing loadMemories logic
+    const loadMemories = async () => {
+      setIsLoading(true);
+      try {
+        const searchQuery = searchParams.get("search") || "";
+        const result = await fetchMemories(
+          searchQuery,
+          currentPage,
+          itemsPerPage,
+          {
+            categories: selectedCategory === "all" ? undefined : [selectedCategory],
+            apps: selectedClient === "all" ? undefined : [selectedClient]
+          }
+        );
+        setMemories(result.memories || []);
+        setTotalItems(result.total || 0);
+        setTotalPages(Math.ceil((result.total || 0) / itemsPerPage));
+      } catch (error) {
+        console.error("Error loading memories:", error);
+        setMemories([]);
+        setTotalItems(0);
+        setTotalPages(1);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadMemories();
+  };
+
   if (isLoading) {
     return (
       <div className="w-full bg-transparent">
@@ -79,7 +114,11 @@ export function MemoriesSection() {
       <div>
         {memories.length > 0 ? (
           <>
-            <MemoryTable />
+            <MemoryTable
+              memories={memories}
+              onDelete={handleDelete}
+              onRefresh={handleRefresh}
+            />
             <div className="flex items-center justify-between mt-4">
               <PageSizeSelector
                 pageSize={itemsPerPage}
