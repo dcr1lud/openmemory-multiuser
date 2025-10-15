@@ -126,7 +126,7 @@ class ApiService {
   }
 
   async createMemory(content: string) {
-    const response = await api.post('/api/v1/memories/', {
+    const response = await api.post('/api/v1/memories', {
       text: content,
     });
     return response.data;

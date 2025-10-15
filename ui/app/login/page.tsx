@@ -7,23 +7,20 @@ import { Brain, Key, AlertCircle, CheckCircle, LogIn } from 'lucide-react';
 import keycloakService from '@/services/keycloak';
 
 export default function LoginPage() {
-  const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [useKeycloak, setUseKeycloak] = useState(false);
+  const [useKeycloak, setUseKeycloak] = useState(true);
+  const [apiKey, setApiKey] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    // Check if Keycloak is configured
+    // Initialize Keycloak
     if (typeof window !== 'undefined') {
-      const keycloakConfigured = keycloakService.initialize();
-      setUseKeycloak(keycloakConfigured);
+      keycloakService.initialize();
 
       // Check if user is already authenticated
-      if (keycloakConfigured) {
-        checkKeycloakAuth();
-      }
+      checkKeycloakAuth();
     }
   }, []);
 
@@ -160,25 +157,9 @@ export default function LoginPage() {
                 <LogIn className="h-5 w-5" />
                 <span>{loading ? 'Redirecting...' : 'Sign in with SSO'}</span>
               </button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-600"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-800 text-gray-400">or</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setUseKeycloak(false)}
-                className="w-full py-2 px-4 text-gray-400 hover:text-white text-sm transition-colors"
-              >
-                Use API Key instead
-              </button>
             </div>
           ) : (
-            // API Key Login (fallback)
+            /* API Key Login (fallback) */
             <form onSubmit={handleApiKeyLogin} className="space-y-6">
               <div>
                 <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-2">

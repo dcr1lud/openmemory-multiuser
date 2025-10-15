@@ -31,23 +31,24 @@ export default function AuthCallbackPage() {
         const userName = keycloakService.getUserName(user);
         const userEmail = keycloakService.getUserEmail(user);
         const accessToken = await keycloakService.getAccessToken();
-        
+
         sessionStorage.setItem('user_id', userId);
         sessionStorage.setItem('user_name', userName);
         sessionStorage.setItem('user_email', userEmail);
-        sessionStorage.setItem('access_token', accessToken || '');
+        sessionStorage.setItem('api_key', accessToken || '');
         sessionStorage.setItem('auth_type', 'keycloak');
-        
+
         // Also store in localStorage as backup
         localStorage.setItem('user_id', userId);
         localStorage.setItem('user_name', userName);
         localStorage.setItem('user_email', userEmail);
+        localStorage.setItem('api_key', accessToken || '');
         localStorage.setItem('auth_type', 'keycloak');
-        
+
         console.log('Keycloak login successful:', { userId, userName, userEmail });
-        
+
         setStatus('success');
-        
+
         // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/');
@@ -59,7 +60,7 @@ export default function AuthCallbackPage() {
       console.error('Keycloak callback error:', err);
       setError(err instanceof Error ? err.message : 'Authentication failed');
       setStatus('error');
-      
+
       // Redirect to login after error
       setTimeout(() => {
         router.push('/login');

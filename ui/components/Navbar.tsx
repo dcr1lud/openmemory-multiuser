@@ -8,9 +8,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Settings } from "lucide-react";
+import { useUIConfig } from "@/hooks/useUIConfig";
 
 export function Navbar() {
   const pathname = usePathname();
+  const { config } = useUIConfig();
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === href;
@@ -52,18 +54,20 @@ export function Navbar() {
               Memories
             </Button>
           </Link>
-          <Link href="/apps">
-            <Button
-              variant="outline"
-              size="sm"
-              className={`flex items-center gap-2 border-none ${
-                isActive("/apps") ? activeClass : inactiveClass
-              }`}
-            >
-              <RiApps2AddFill />
-              Apps
-            </Button>
-          </Link>
+          {(config.features.enable_apps && process.env.NEXT_PUBLIC_AUTH_MODE !== 'keycloak-only') && (
+            <Link href="/apps">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`flex items-center gap-2 border-none ${
+                  isActive("/apps") ? activeClass : inactiveClass
+                }`}
+              >
+                <RiApps2AddFill />
+                Apps
+              </Button>
+            </Link>
+          )}
           <Link href="/settings">
             <Button
               variant="outline"

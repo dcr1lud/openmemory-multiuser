@@ -44,28 +44,24 @@ def get_all_users(
     current_user: User = Depends(require_user),
     db: Session = Depends(get_db)
 ):
-    """Get all users with their memory counts"""
-    users = db.query(User).all()
+    """Get current user only"""
+    # Count active memories for current user
+    memory_count = db.query(Memory).filter(
+        Memory.user_id == current_user.id,
+        Memory.state == "active"
+    ).count()
 
-    user_responses = []
-    for user in users:
-        # Count active memories for each user
-        memory_count = db.query(Memory).filter(
-            Memory.user_id == user.id,
-            Memory.state == "active"
-        ).count()
+    user_response = UserResponse(
+        id=str(current_user.id),
+        user_id=current_user.user_id,
+        name=current_user.name or current_user.user_id,
+        email=current_user.email,
+        created_at=current_user.created_at.isoformat(),
+        last_active=current_user.last_active.isoformat() if current_user.last_active else None,
+        memory_count=memory_count
+    )
 
-        user_responses.append(UserResponse(
-            id=str(user.id),
-            user_id=user.user_id,
-            name=user.name or user.user_id,
-            email=user.email,
-            created_at=user.created_at.isoformat(),
-            last_active=user.last_active.isoformat() if user.last_active else None,
-            memory_count=memory_count
-        ))
-
-    return user_responses
+    return [user_response]
 
 
 @router.get("/{user_id}", response_model=UserResponse)

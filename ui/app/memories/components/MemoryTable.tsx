@@ -39,10 +39,12 @@ export default function MemoryTable({ memories, onDelete, onRefresh }: MemoryTab
     const user = users.find(u => u.id === memory.user_id) || memory.user;
     
     if (!user) {
+      // Use environment override for single-user deployments
+      const defaultUserName = process.env.NEXT_PUBLIC_DEFAULT_USER_NAME || 'Unknown';
       return {
-        initials: '?',
-        name: 'Unknown',
-        color: '#6B7280' // gray
+        initials: defaultUserName === 'Unknown' ? '?' : apiService.getUserInitials(defaultUserName),
+        name: defaultUserName,
+        color: defaultUserName === 'Unknown' ? '#6B7280' : apiService.getUserColor(memory.user_id || 'default')
       };
     }
 

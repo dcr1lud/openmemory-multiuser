@@ -16,5 +16,10 @@
                 "ollama_base_url": "http://localhost:11434"
             }
         }
+    },
+    "ui": {
+        "features": {
+            "enable_apps": false
+        }
     }
 }
