@@ -90,6 +90,7 @@ interface UseMemoriesApiReturn {
   fetchRelatedMemories: (memoryId: string) => Promise<void>;
   createMemory: (text: string) => Promise<void>;
   deleteMemories: (memoryIds: string[]) => Promise<void>;
+  deleteAllMemories: () => Promise<void>;
   updateMemory: (memoryId: string, content: string) => Promise<void>;
   updateMemoryState: (memoryIds: string[], state: string) => Promise<void>;
   isLoading: boolean;
@@ -181,9 +182,15 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
   const deleteMemories = async (memory_ids: string[]) => {
     try {
-      await axios.delete(`${URL}/api/v1/memories/`, {
-        data: { memory_ids, user_id }
-      });
+      // For single memory, use individual delete endpoint
+      if (memory_ids.length === 1) {
+        await apiService.deleteMemory(memory_ids[0]);
+      } else {
+        // For multiple memories, delete each individually
+        for (const memoryId of memory_ids) {
+          await apiService.deleteMemory(memoryId);
+        }
+      }
       dispatch(setMemoriesSuccess(memories.filter((memory: Memory) => !memory_ids.includes(memory.id))));
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to delete memories';
@@ -275,11 +282,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      await axios.put(`${URL}/api/v1/memories/${memoryId}`, {
-        memory_id: memoryId,
-        memory_content: content,
-        user_id: user_id
-      });
+      await apiService.updateMemory(memoryId, { content });
       setIsLoading(false);
       setHasUpdates(hasUpdates + 1);
     } catch (err: any) {
@@ -330,6 +333,22 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     }
   };
 
+  const deleteAllMemories = async (): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiService.deleteAllMemories();
+      dispatch(setMemoriesSuccess([])); // Clear all memories from state
+      setIsLoading(false);
+      setHasUpdates(hasUpdates + 1);
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to delete all memories';
+      setError(errorMessage);
+      setIsLoading(false);
+      throw new Error(errorMessage);
+    }
+  };
+
   return {
     fetchMemories,
     fetchMemoryById,
@@ -337,6 +356,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     fetchRelatedMemories,
     createMemory,
     deleteMemories,
+    deleteAllMemories,
     updateMemory,
     updateMemoryState,
     isLoading,

@@ -133,9 +133,17 @@ class ApiService {
   }
 
   async deleteMemory(memoryId: string) {
-    const response = await api.delete('/api/v1/memories/', {
-      data: { memory_id: memoryId }
-    });
+    const response = await api.delete(`/api/v1/memories/${memoryId}`);
+    return response.data;
+  }
+
+  async updateMemory(memoryId: string, data: { content?: string; metadata?: MemoryMetadata }) {
+    const response = await api.put(`/api/v1/memories/${memoryId}`, data);
+    return response.data;
+  }
+
+  async deleteAllMemories() {
+    const response = await api.delete('/api/v1/memories');
     return response.data;
   }
 
