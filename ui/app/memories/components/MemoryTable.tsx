@@ -2,10 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, Search, Calendar, User as UserIcon, Pencil } from 'lucide-react';
+import { Trash2, Search, Calendar, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import apiService, { Memory, User } from '@/services/api';
-// import UpdateMemory from '@/components/shared/update-memory';
 
 interface MemoryTableProps {
   memories: Memory[];
@@ -17,7 +16,6 @@ export default function MemoryTable({ memories, onDelete, onRefresh }: MemoryTab
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  // const [editingMemory, setEditingMemory] = useState<{ id: string; content: string } | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -132,14 +130,6 @@ export default function MemoryTable({ memories, onDelete, onRefresh }: MemoryTab
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => console.log("Edit clicked for memory:", memory.id)}
-                          disabled={loading}
-                          className="text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
-                          title="Edit memory"
-                        >
-                          <Pencil className="h-5 w-5" />
-                        </button>
-                        <button
                           onClick={() => handleDelete(memory.id)}
                           disabled={loading}
                           className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
@@ -161,21 +151,6 @@ export default function MemoryTable({ memories, onDelete, onRefresh }: MemoryTab
       <div className="px-6 py-3 border-t border-gray-700 text-sm text-gray-400">
         Showing {filteredMemories.length} of {memories.length} memories
       </div>
-
-      {/* Edit Memory Dialog */}
-      {/* {editingMemory && (
-        <UpdateMemory
-          memoryId={editingMemory.id}
-          memoryContent={editingMemory.content}
-          open={!!editingMemory}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingMemory(null);
-              onRefresh(); // Refresh the table after closing dialog
-            }
-          }}
-        />
-      )} */}
     </div>
   );
 }

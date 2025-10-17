@@ -12,7 +12,8 @@ import {
   RefreshCw,
   LogOut,
   Tag as TagIcon,
-  Flag
+  Flag,
+  Edit
 } from 'lucide-react';
 import apiService, { Memory, User, PaginatedResponse } from '@/services/api';
 
@@ -29,7 +30,8 @@ export default function MemoriesPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newMemoryContent, setNewMemoryContent] = useState('');
   const [creating, setCreating] = useState(false);
-  
+  const [editingMemory, setEditingMemory] = useState<{id: string, content: string} | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function MemoriesPage() {
 
   const checkAuth = () => {
     if (typeof window === 'undefined') return;
-    
+
     const apiKey = sessionStorage.getItem('api_key') || localStorage.getItem('api_key');
     const userId = sessionStorage.getItem('user_id') || localStorage.getItem('user_id');
     const userName = sessionStorage.getItem('user_name') || localStorage.getItem('user_name');
@@ -61,7 +63,7 @@ export default function MemoriesPage() {
         size: pageSize,
         state: 'active'
       });
-      
+
       setMemories(response.items || []);
       setTotalPages(response.pages || 1);
       setTotalItems(response.total || 0);
@@ -83,7 +85,7 @@ export default function MemoriesPage() {
 
   const handleCreateMemory = async () => {
     if (!newMemoryContent.trim()) return;
-    
+
     setCreating(true);
     try {
       await apiService.createMemory(newMemoryContent);
@@ -98,9 +100,22 @@ export default function MemoriesPage() {
     }
   };
 
+  const handleUpdateMemory = async () => {
+    if (!editingMemory || !editingMemory.content.trim()) return;
+
+    try {
+      await apiService.updateMemory(editingMemory.id, { content: editingMemory.content });
+      setEditingMemory(null);
+      fetchMemories(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to update memory:', error);
+      alert('Failed to update memory');
+    }
+  };
+
   const handleDeleteMemory = async (id: string) => {
     if (!confirm('Are you sure you want to delete this memory?')) return;
-    
+
     try {
       await apiService.deleteMemory(id);
       fetchMemories(); // Refresh the list
@@ -120,7 +135,7 @@ export default function MemoriesPage() {
 
   const getUserDisplay = (memory: Memory) => {
     const user = users.find(u => u.id === memory.user_id) || memory.user;
-    
+
     if (!user) {
       return { initials: '?', name: 'Unknown', color: '#6B7280' };
     }
@@ -149,7 +164,7 @@ export default function MemoriesPage() {
   // Get priority styling - now ALWAYS returns a style with flag icon
   const getPriorityStyle = (priority?: string) => {
     if (!priority) return null;
-    
+
     if (isHighPriority(priority)) {
       return {
         borderColor: 'border-red-500',
@@ -167,7 +182,7 @@ export default function MemoriesPage() {
         icon: <Flag className="h-3 w-3" />
       };
     }
-    
+
     // Default style for all other priorities (low, custom, etc.) - includes flag icon
     return {
       borderColor: '',
@@ -284,7 +299,7 @@ export default function MemoriesPage() {
               const userDisplay = getUserDisplay(memory);
               const metadata = memory.metadata;
               const priorityStyle = metadata?.priority ? getPriorityStyle(metadata.priority) : null;
-              
+
               return (
                 <div
                   key={memory.id}
@@ -356,15 +371,24 @@ export default function MemoriesPage() {
                         )}
                       </div>
                     </div>
-                    
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => handleDeleteMemory(memory.id)}
-                      className="ml-4 p-2 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Delete memory"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingMemory({id: memory.id, content: memory.content})}
+                        className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
+                        title="Edit memory"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMemory(memory.id)}
+                        className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                        title="Delete memory"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -424,6 +448,36 @@ export default function MemoriesPage() {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {creating ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Memory Dialog */}
+      {editingMemory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-white mb-4">Edit Memory</h2>
+            <textarea
+              value={editingMemory.content}
+              onChange={(e) => setEditingMemory({...editingMemory, content: e.target.value})}
+              className="w-full h-32 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={() => setEditingMemory(null)}
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateMemory}
+                disabled={!editingMemory.content.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Update
               </button>
             </div>
           </div>
