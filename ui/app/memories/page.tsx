@@ -35,13 +35,18 @@ export default function MemoriesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
-    fetchMemories();
-    fetchUsers();
+    const initializePage = async () => {
+      const isAuthenticated = checkAuth();
+      if (isAuthenticated) {
+        await fetchMemories();
+        await fetchUsers();
+      }
+    };
+    initializePage();
   }, [currentPage, pageSize]);
 
   const checkAuth = () => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return false;
 
     const apiKey = sessionStorage.getItem('api_key') || localStorage.getItem('api_key');
     const userId = sessionStorage.getItem('user_id') || localStorage.getItem('user_id');
@@ -49,10 +54,11 @@ export default function MemoriesPage() {
 
     if (!apiKey) {
       router.push('/login');
-      return;
+      return false;
     }
 
     setCurrentUser({ userId, userName, apiKey: apiKey.substring(0, 10) + '...' });
+    return true;
   };
 
   const fetchMemories = async () => {

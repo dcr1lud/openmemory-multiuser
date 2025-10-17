@@ -33,12 +33,17 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
-    fetchDashboardData();
+    const initializePage = async () => {
+      const isAuthenticated = checkAuth();
+      if (isAuthenticated) {
+        await fetchDashboardData();
+      }
+    };
+    initializePage();
   }, []);
 
   const checkAuth = () => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return false;
 
     const authType = sessionStorage.getItem('auth_type') || localStorage.getItem('auth_type') || 'api_key';
 
@@ -50,10 +55,11 @@ export default function DashboardPage() {
 
       if (!accessToken || !userId) {
         router.push('/login');
-        return;
+        return false;
       }
 
       setCurrentUser({ userId, userName, authType: 'keycloak' });
+      return true;
     } else {
       // Check API key authentication
       const apiKey = sessionStorage.getItem('api_key') || localStorage.getItem('api_key');
@@ -62,10 +68,11 @@ export default function DashboardPage() {
 
       if (!apiKey) {
         router.push('/login');
-        return;
+        return false;
       }
 
       setCurrentUser({ userId, userName, authType: 'api_key' });
+      return true;
     }
   };
 
