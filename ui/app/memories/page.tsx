@@ -382,7 +382,7 @@ export default function MemoriesPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => setEditingMemory({id: memory.id, content: memory.content})}
-                        className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
+                        className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
                         title="Edit memory"
                       >
                         <Edit className="h-4 w-4" />
