@@ -61,7 +61,7 @@ export function MemoryCard({
                   Accessed {access_count} times
                 </span>
               ) : (
-                new Date(created_at + "Z").toLocaleDateString("en-US", {
+                new Date(created_at).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "short",
                   day: "numeric",

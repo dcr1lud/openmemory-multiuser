@@ -94,7 +94,7 @@ export function AccessLog({ memoryId }: AccessLogProps) {
                 <div className="flex flex-col">
                   <span className="font-medium">{appConfig.name}</span>
                   <span className="text-zinc-400 text-sm">
-                    {new Date(entry.accessed_at + "Z").toLocaleDateString(
+                    {new Date(entry.accessed_at).toLocaleDateString(
                       "en-US",
                       {
                         year: "numeric",
