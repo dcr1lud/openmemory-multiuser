@@ -10,6 +10,9 @@ export const metadata = {
   title: "OpenMemory - Developer Dashboard",
   description: "Manage your OpenMemory integration and stored memories",
   generator: "v0.dev",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
