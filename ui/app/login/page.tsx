@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Brain, Key, AlertCircle, CheckCircle, LogIn } from 'lucide-react';
 import keycloakService from '@/services/keycloak';
@@ -13,8 +13,15 @@ export default function LoginPage() {
   const [useKeycloak, setUseKeycloak] = useState(true);
   const [apiKey, setApiKey] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Check if session expired
+    const expired = searchParams.get('expired');
+    if (expired === 'true') {
+      setError('Your session has expired. Please log in again.');
+    }
+
     // Initialize Keycloak
     if (typeof window !== 'undefined') {
       keycloakService.initialize();
@@ -22,7 +29,7 @@ export default function LoginPage() {
       // Check if user is already authenticated
       checkKeycloakAuth();
     }
-  }, []);
+  }, [searchParams]);
 
   const checkKeycloakAuth = async () => {
     try {
