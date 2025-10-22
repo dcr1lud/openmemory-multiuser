@@ -98,9 +98,10 @@ export default function MemoriesPage() {
       setNewMemoryContent('');
       setShowCreateDialog(false);
       fetchMemories(); // Refresh the list
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create memory:', error);
-      alert('Failed to create memory');
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create memory';
+      alert(errorMessage);
     } finally {
       setCreating(false);
     }

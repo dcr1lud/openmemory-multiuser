@@ -173,7 +173,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     try {
       await apiService.createMemory(text);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to create memory';
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to create memory';
       setError(errorMessage);
       setIsLoading(false);
       throw new Error(errorMessage);

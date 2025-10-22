@@ -31,9 +31,10 @@ export function CreateMemoryDialog() {
       setOpen(false);
       // refetch memories
       await fetchMemories();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Failed to create memory");
+      const errorMessage = error.response?.data?.detail || error.message || "Failed to create memory";
+      toast.error(errorMessage);
     }
   };
 
