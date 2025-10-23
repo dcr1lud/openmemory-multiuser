@@ -381,6 +381,8 @@ export default function MemoriesPage() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
+                      {/*
+                        Edit button is disabled due to mem0 backend bug: update endpoint is broken and can delete all user memories.
                       <button
                         onClick={() => setEditingMemory({id: memory.id, content: memory.content})}
                         className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
@@ -388,6 +390,7 @@ export default function MemoriesPage() {
                       >
                         <Edit className="h-4 w-4" />
                       </button>
+                      */}
                       <button
                         onClick={() => handleDeleteMemory(memory.id)}
                         className="p-2 text-gray-400 hover:text-red-400 transition-colors"
@@ -461,7 +464,8 @@ export default function MemoriesPage() {
         </div>
       )}
 
-      {/* Edit Memory Dialog */}
+      {/*
+        Edit Memory Dialog is disabled due to mem0 backend bug: update endpoint is broken and can delete all user memories.
       {editingMemory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
@@ -490,6 +494,7 @@ export default function MemoriesPage() {
           </div>
         </div>
       )}
+      */}
     </div>
   );
 }
