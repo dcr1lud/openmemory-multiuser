@@ -171,7 +171,19 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
   const createMemory = async (text: string): Promise<void> => {
     try {
-      await apiService.createMemory(text);
+      const response = await apiService.createMemory(text);
+
+      // Always pass notification info to be handled by the UI component
+      if (response.notification) {
+        throw new Error(JSON.stringify(response.notification));
+      }
+
+      // Fallback if no notification object (shouldn't happen with new backend)
+      throw new Error(JSON.stringify({
+        type: "success",
+        message: "Memory created successfully"
+      }));
+
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to create memory';
       setError(errorMessage);

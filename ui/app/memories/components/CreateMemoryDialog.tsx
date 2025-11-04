@@ -26,13 +26,42 @@ export function CreateMemoryDialog() {
   const handleCreateMemory = async (text: string) => {
     try {
       await createMemory(text);
+      // If we reach here, it's a fallback success (shouldn't happen with new system)
       toast.success("Memory created successfully");
-      // close the dialog
       setOpen(false);
-      // refetch memories
       await fetchMemories();
     } catch (error: any) {
       console.error(error);
+
+      // Try to parse notification from backend
+      try {
+        const notification = JSON.parse(error.message);
+        if (notification.type && notification.message) {
+          // Use backend-controlled notification
+          switch (notification.type) {
+            case 'success':
+              toast.success(notification.message);
+              setOpen(false);
+              await fetchMemories();
+              break;
+            case 'info':
+              toast(notification.message);
+              setOpen(false);
+              await fetchMemories();
+              break;
+            case 'warning':
+              toast.warning(notification.message);
+              break;
+            default:
+              toast.error(notification.message);
+          }
+          return;
+        }
+      } catch {
+        // Not a notification object, handle as regular error
+      }
+
+      // Fallback to regular error handling
       const errorMessage = error.response?.data?.detail || error.message || "Failed to create memory";
       toast.error(errorMessage);
     }
