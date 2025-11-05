@@ -2,7 +2,7 @@ import type React from "react";
 import "@/app/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/Navbar";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Providers } from "./providers";
 
