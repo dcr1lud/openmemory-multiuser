@@ -95,6 +95,7 @@ interface UseMemoriesApiReturn {
   updateMemoryState: (memoryIds: string[], state: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  notification: string | null;
   hasUpdates: number;
   memories: Memory[];
   selectedMemory: SimpleMemory | null;
@@ -103,6 +104,7 @@ interface UseMemoriesApiReturn {
 export const useMemoriesApi = (): UseMemoriesApiReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<string | null>(null);
   const [hasUpdates, setHasUpdates] = useState<number>(0);
   const dispatch = useDispatch<AppDispatch>();
   const user_id = useSelector((state: RootState) => state.profile.userId);
@@ -171,18 +173,28 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
   const createMemory = async (text: string): Promise<void> => {
     try {
+      setIsLoading(true);
+      setNotification(null); // Clear previous notifications
+      setError(null);        // Clear previous errors
+
       const response = await apiService.createMemory(text);
 
-      // Always pass notification info to be handled by the UI component
       if (response.notification) {
-        throw new Error(JSON.stringify(response.notification));
+        if (response.notification.type === "error") {
+          setError(response.notification.message);
+          setIsLoading(false);
+          throw new Error(response.notification.message);
+        } else {
+          // For success or info messages, set notification state with type
+          setNotification(JSON.stringify(response.notification));
+          setIsLoading(false);
+          return; // Exit gracefully
+        }
       }
 
-      // Fallback if no notification object (shouldn't happen with new backend)
-      throw new Error(JSON.stringify({
-        type: "success",
-        message: "Memory created successfully"
-      }));
+      // Fallback for success
+      setNotification("Memory created successfully");
+      setIsLoading(false);
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to create memory';
@@ -373,6 +385,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     updateMemoryState,
     isLoading,
     error,
+    notification,
     hasUpdates,
     memories,
     selectedMemory

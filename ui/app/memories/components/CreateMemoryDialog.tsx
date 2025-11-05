@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { GoPlus } from "react-icons/go";
 import { Loader2 } from "lucide-react";
 import { useMemoriesApi } from "@/hooks/useMemoriesApi";
@@ -19,18 +19,43 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 
 export function CreateMemoryDialog() {
-  const { createMemory, isLoading, fetchMemories } = useMemoriesApi();
+  const { createMemory, isLoading, notification, error, fetchMemories } = useMemoriesApi();
   const [open, setOpen] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
+
+  // Show toast when notification changes
+  useEffect(() => {
+    if (notification) {
+      try {
+        const notificationObj = JSON.parse(notification);
+        if (notificationObj.type === "success") {
+          toast.success(notificationObj.message);
+        } else {
+          // For info, warning, or other types, use basic success toast
+          toast.success(notificationObj.message);
+        }
+      } catch {
+        // Fallback for plain string notifications
+        toast.success(notification);
+      }
+      setOpen(false);
+      fetchMemories();
+    }
+  }, [notification, fetchMemories]);
+
+  // Show error toast when error changes
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   const handleCreateMemory = async (text: string) => {
     try {
       await createMemory(text);
-      // If we reach here, it's a fallback success (shouldn't happen with new system)
-      toast.success("Memory created successfully");
-      setOpen(false);
-      await fetchMemories();
+      // Success/notification handling is done via useEffect above
     } catch (error: any) {
+      // Error handling is done via useEffect above
       console.error(error);
 
       // Try to parse notification from backend
