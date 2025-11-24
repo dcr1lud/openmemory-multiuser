@@ -25,14 +25,12 @@ export function CreateMemoryDialog() {
 
   // Show toast when notification changes
   useEffect(() => {
-    console.log('Notification changed:', notification); // Debug log
     if (notification) {
       try {
         // Handle both string and object cases
         const notificationObj = typeof notification === 'string'
           ? JSON.parse(notification)
           : notification;
-        console.log('Processed notification:', notificationObj); // Debug log
 
         if (notificationObj && notificationObj.type && notificationObj.message) {
           switch (notificationObj.type) {
@@ -62,7 +60,6 @@ export function CreateMemoryDialog() {
         }
       } catch (e) {
         // Fallback for plain string notifications
-        console.log('Using fallback notification:', notification); // Debug log
         toast.success(typeof notification === 'string' ? notification : 'Memory created successfully');
         setOpen(false);
         fetchMemories();

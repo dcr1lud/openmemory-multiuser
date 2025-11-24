@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { setAccessLogs, setMemoriesSuccess, setSelectedMemory, setRelatedMemories } from '@/store/memoriesSlice';
 import apiService from '@/services/api';
+import { toast } from 'sonner';
 
 // Define the new simplified memory type
 export interface SimpleMemory {
@@ -182,10 +183,15 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
       // Check if the response indicates failure
       if (response.success === false) {
-        console.log('Memory creation failed, setting notification:', response.notification); // Debug log
         if (response.notification) {
           // Set notification for warning/error messages
           setNotification(response.notification);
+          // Also trigger toast immediately to avoid useEffect issues
+          if (response.notification.type === 'warning') {
+            toast.warning(response.notification.message);
+          } else if (response.notification.type === 'error') {
+            toast.error(response.notification.message);
+          }
         } else {
           // Fallback error message
           setError(response.message || 'Failed to create memory');
@@ -195,7 +201,6 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       }
 
       // Success case
-      console.log('Memory creation succeeded, setting notification:', response.notification); // Debug log
       if (response.notification) {
         setNotification(response.notification);
       } else {
