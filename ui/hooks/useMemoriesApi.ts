@@ -203,10 +203,17 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       // Success case
       if (response.notification) {
         setNotification(response.notification);
+        if (response.notification.type === 'success') {
+          toast.success(response.notification.message);
+        }
       } else {
         // Fallback for success
         setNotification({ type: "success", message: "Memory created successfully" });
+        toast.success("Memory created successfully");
       }
+
+      // Refresh memories on success
+      await fetchMemories();
       setIsLoading(false);
 
     } catch (err: any) {
