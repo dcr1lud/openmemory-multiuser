@@ -185,31 +185,18 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
       // Check if the response indicates failure
       if (response.success === false) {
+        setIsLoading(false);
+
         if (response.notification) {
-
-          // >>>>>>>> START OF WORKAROUND <<<<<<<<<<
-          if (response.notification.type === 'warning' && typeof window !== 'undefined') {
-              // Use native browser alert for the warning case
-              window.alert(response.notification.message);
-              setIsLoading(false);
-              return; // Exit the function here
-          }
-          // >>>>>>>> END OF WORKAROUND <<<<<<<<<<
-
-          // Set notification for error messages
           setNotification(response.notification);
-          // Fallback to Sonner toast for other types
-          if (response.notification.type === 'error') {
-            toast.error(response.notification.message);
-          }
+          // Throw error so dialog's catch block executes with alert
+          throw new Error(response.notification.message);
         } else {
           // Fallback error message for success: false but no notification object
           const errorMessage = response.message || 'Failed to create memory';
           setError(errorMessage);
-          typeof window !== 'undefined' && window.alert(errorMessage);
+          throw new Error(errorMessage);
         }
-        setIsLoading(false);
-        return; // Don't throw error, let notification handle it
       }
 
       // Success case

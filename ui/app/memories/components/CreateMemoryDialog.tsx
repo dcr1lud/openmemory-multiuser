@@ -24,9 +24,15 @@ export function CreateMemoryDialog() {
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const handleCreateMemory = async (text: string) => {
-    await createMemory(text, () => setOpen(false));
-    // Hook handles all toasts internally
-    // Dialog closes only on success via callback
+    try {
+      await createMemory(text, () => setOpen(false));
+      // Hook handles all toasts internally
+      // Dialog closes only on success via callback
+    } catch (error: any) {
+      console.error("Failed to create memory:", error);
+      // Guaranteed alert for production environment
+      window.alert(error.message || "Failed to create memory");
+    }
   };
 
   return (
