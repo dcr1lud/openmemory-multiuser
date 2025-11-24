@@ -15,7 +15,7 @@ import { useState, useRef, useEffect } from "react";
 import { GoPlus } from "react-icons/go";
 import { Loader2 } from "lucide-react";
 import { useMemoriesApi } from "@/hooks/useMemoriesApi";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 
 export function CreateMemoryDialog() {
@@ -30,7 +30,8 @@ export function CreateMemoryDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
@@ -76,5 +77,7 @@ export function CreateMemoryDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <Toaster position="top-right" expand={true} richColors />
+    </>
   );
 }
