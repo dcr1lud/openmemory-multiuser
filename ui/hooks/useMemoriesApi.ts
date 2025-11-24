@@ -178,9 +178,11 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       setError(null);        // Clear previous errors
 
       const response = await apiService.createMemory(text);
+      console.log('API Response:', response); // Debug log
 
       // Check if the response indicates failure
       if (response.success === false) {
+        console.log('Memory creation failed, setting notification:', response.notification); // Debug log
         if (response.notification) {
           // Set notification for warning/error messages
           setNotification(JSON.stringify(response.notification));
@@ -193,6 +195,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       }
 
       // Success case
+      console.log('Memory creation succeeded, setting notification:', response.notification); // Debug log
       if (response.notification) {
         setNotification(JSON.stringify(response.notification));
       } else {
@@ -202,6 +205,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       setIsLoading(false);
 
     } catch (err: any) {
+      console.log('Memory creation error:', err); // Debug log
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to create memory';
       setError(errorMessage);
       setIsLoading(false);
