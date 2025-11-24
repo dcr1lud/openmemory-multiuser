@@ -179,21 +179,26 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
 
       const response = await apiService.createMemory(text);
 
-      if (response.notification) {
-        if (response.notification.type === "error") {
-          setError(response.notification.message);
-          setIsLoading(false);
-          throw new Error(response.notification.message);
-        } else {
-          // For success or info messages, set notification state with type
+      // Check if the response indicates failure
+      if (response.success === false) {
+        if (response.notification) {
+          // Set notification for warning/error messages
           setNotification(JSON.stringify(response.notification));
-          setIsLoading(false);
-          return; // Exit gracefully
+        } else {
+          // Fallback error message
+          setError(response.message || 'Failed to create memory');
         }
+        setIsLoading(false);
+        return; // Don't throw error, let notification handle it
       }
 
-      // Fallback for success
-      setNotification("Memory created successfully");
+      // Success case
+      if (response.notification) {
+        setNotification(JSON.stringify(response.notification));
+      } else {
+        // Fallback for success
+        setNotification(JSON.stringify({ type: "success", message: "Memory created successfully" }));
+      }
       setIsLoading(false);
 
     } catch (err: any) {

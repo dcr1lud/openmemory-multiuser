@@ -38,6 +38,10 @@ export function CreateMemoryDialog() {
             toast.warning(notificationObj.message);
             // Don't close dialog or refresh for warnings
             break;
+          case "error":
+            toast.error(notificationObj.message);
+            // Don't close dialog or refresh for errors
+            break;
           case "info":
             toast(notificationObj.message);
             setOpen(false);
