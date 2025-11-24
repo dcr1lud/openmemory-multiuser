@@ -2,9 +2,9 @@ import type React from "react";
 import "@/app/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/Navbar";
-import { Toaster } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Providers } from "./providers";
+import { SonnerProvider } from "@/components/providers/sonner-provider";
 
 export const metadata = {
   title: "OpenMemory - Developer Dashboard",
@@ -32,9 +32,7 @@ export default function RootLayout({
           >
             <Navbar />
             <ScrollArea className="h-[calc(100vh-64px)]">{children}</ScrollArea>
-            <Toaster position="top-right" expand={true} richColors toastOptions={{
-              style: { zIndex: 9999 }
-            }} />
+            <SonnerProvider />
           </ThemeProvider>
         </Providers>
       </body>

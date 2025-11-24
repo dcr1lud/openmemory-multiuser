@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { Memory, Client, Category } from '@/components/types';
@@ -5,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { setAccessLogs, setMemoriesSuccess, setSelectedMemory, setRelatedMemories } from '@/store/memoriesSlice';
 import apiService from '@/services/api';
+import { toast } from 'sonner';
 
 // Define the new simplified memory type
 export interface SimpleMemory {
@@ -185,10 +188,17 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         if (response.notification) {
           // Set notification for warning/error messages
           setNotification(response.notification);
+          // Call toast directly in client-side hook
+          if (response.notification.type === 'warning') {
+            toast.warning(response.notification.message);
+          } else if (response.notification.type === 'error') {
+            toast.error(response.notification.message);
+          }
         } else {
           // Fallback error message for success: false but no notification object
           const errorMessage = response.message || 'Failed to create memory';
           setError(errorMessage);
+          toast.error(errorMessage);
         }
         setIsLoading(false);
         return; // Don't throw error, let notification handle it
@@ -197,9 +207,13 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       // Success case
       if (response.notification) {
         setNotification(response.notification);
+        if (response.notification.type === 'success') {
+          toast.success(response.notification.message);
+        }
       } else {
         // Fallback for success
         setNotification({ type: "success", message: "Memory created successfully" });
+        toast.success("Memory created successfully");
       }
 
       // Refresh memories on success
@@ -213,10 +227,10 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       setIsLoading(false);
 
     } catch (err: any) {
-      console.log('Memory creation error:', err); // Debug log
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to create memory';
       setError(errorMessage);
       setIsLoading(false);
+      toast.error(errorMessage);
       throw new Error(errorMessage);
     }
   };
