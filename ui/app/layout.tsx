@@ -32,7 +32,9 @@ export default function RootLayout({
           >
             <Navbar />
             <ScrollArea className="h-[calc(100vh-64px)]">{children}</ScrollArea>
-            <Toaster position="top-right" expand={true} richColors />
+            <Toaster position="top-right" expand={true} richColors toastOptions={{
+              style: { zIndex: 9999 }
+            }} />
           </ThemeProvider>
         </Providers>
       </body>

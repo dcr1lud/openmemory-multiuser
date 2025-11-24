@@ -89,7 +89,7 @@ interface UseMemoriesApiReturn {
   fetchMemoryById: (memoryId: string) => Promise<void>;
   fetchAccessLogs: (memoryId: string, page?: number, pageSize?: number) => Promise<void>;
   fetchRelatedMemories: (memoryId: string) => Promise<void>;
-  createMemory: (text: string) => Promise<void>;
+  createMemory: (text: string, onSuccess?: () => void) => Promise<void>;
   deleteMemories: (memoryIds: string[]) => Promise<void>;
   deleteAllMemories: () => Promise<void>;
   updateMemory: (memoryId: string, content: string) => Promise<void>;
@@ -172,7 +172,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
     }
   }, [user_id, dispatch]);
 
-  const createMemory = async (text: string): Promise<void> => {
+  const createMemory = async (text: string, onSuccess?: () => void): Promise<void> => {
     try {
       setIsLoading(true);
       setNotification(null); // Clear previous notifications
@@ -186,15 +186,28 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         if (response.notification) {
           // Set notification for warning/error messages
           setNotification(response.notification);
-          // Also trigger toast immediately to avoid useEffect issues
-          if (response.notification.type === 'warning') {
-            toast.warning(response.notification.message);
-          } else if (response.notification.type === 'error') {
-            toast.error(response.notification.message);
+
+          // Use switch for clarity and ensure prompt display
+          switch (response.notification.type) {
+            case 'warning':
+              setTimeout(() => toast.warning(response.notification.message), 0);
+              break;
+            case 'error':
+              setTimeout(() => toast.error(response.notification.message), 0);
+              break;
+            case 'success':
+              toast.success(response.notification.message);
+              if (onSuccess) onSuccess();
+              await fetchMemories();
+              break;
+            default:
+              toast(response.notification.message);
           }
         } else {
-          // Fallback error message
-          setError(response.message || 'Failed to create memory');
+          // Fallback error message for success: false but no notification object
+          const errorMessage = response.message || 'Failed to create memory';
+          setError(errorMessage);
+          toast.error(errorMessage);
         }
         setIsLoading(false);
         return; // Don't throw error, let notification handle it
@@ -208,12 +221,17 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         }
       } else {
         // Fallback for success
-        setNotification({ type: "success", message: "Memory created successfully" });
         toast.success("Memory created successfully");
       }
 
       // Refresh memories on success
       await fetchMemories();
+
+      // Call success callback (e.g., to close dialog)
+      if (onSuccess) {
+        onSuccess();
+      }
+
       setIsLoading(false);
 
     } catch (err: any) {
@@ -221,6 +239,8 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       const errorMessage = err.response?.data?.detail || err.message || 'Failed to create memory';
       setError(errorMessage);
       setIsLoading(false);
+      // Show toast for network failures
+      toast.error(errorMessage);
       throw new Error(errorMessage);
     }
   };

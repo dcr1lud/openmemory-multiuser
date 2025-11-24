@@ -23,54 +23,10 @@ export function CreateMemoryDialog() {
   const [open, setOpen] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
-  // Show error toast when error changes
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
-
   const handleCreateMemory = async (text: string) => {
-    try {
-      await createMemory(text);
-      // Close dialog on success (warnings/errors keep it open)
-      setOpen(false);
-    } catch (error: any) {
-      // Error handling is done via useEffect above
-      console.error(error);
-
-      // Try to parse notification from backend
-      try {
-        const notification = JSON.parse(error.message);
-        if (notification.type && notification.message) {
-          // Use backend-controlled notification
-          switch (notification.type) {
-            case 'success':
-              toast.success(notification.message);
-              setOpen(false);
-              await fetchMemories();
-              break;
-            case 'info':
-              toast(notification.message);
-              setOpen(false);
-              await fetchMemories();
-              break;
-            case 'warning':
-              toast.warning(notification.message);
-              break;
-            default:
-              toast.error(notification.message);
-          }
-          return;
-        }
-      } catch {
-        // Not a notification object, handle as regular error
-      }
-
-      // Fallback to regular error handling
-      const errorMessage = error.response?.data?.detail || error.message || "Failed to create memory";
-      toast.error(errorMessage);
-    }
+    await createMemory(text, () => setOpen(false));
+    // Hook handles all toasts internally
+    // Dialog closes only on success via callback
   };
 
   return (
