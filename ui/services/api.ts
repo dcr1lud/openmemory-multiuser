@@ -129,6 +129,8 @@ class ApiService {
     const response = await api.post('/api/v1/memories', {
       text: content,
     });
+
+    // Always return the response data, let the hook handle success/failure
     return response.data;
   }
 

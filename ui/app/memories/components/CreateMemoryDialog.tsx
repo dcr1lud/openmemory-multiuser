@@ -28,36 +28,42 @@ export function CreateMemoryDialog() {
     console.log('Notification changed:', notification); // Debug log
     if (notification) {
       try {
-        const notificationObj = JSON.parse(notification);
-        console.log('Parsed notification:', notificationObj); // Debug log
-        switch (notificationObj.type) {
-          case "success":
-            toast.success(notificationObj.message);
-            setOpen(false);
-            fetchMemories();
-            break;
-          case "warning":
-            toast.warning(notificationObj.message);
-            // Don't close dialog or refresh for warnings
-            break;
-          case "error":
-            toast.error(notificationObj.message);
-            // Don't close dialog or refresh for errors
-            break;
-          case "info":
-            toast(notificationObj.message);
-            setOpen(false);
-            fetchMemories();
-            break;
-          default:
-            toast.success(notificationObj.message);
-            setOpen(false);
-            fetchMemories();
+        // Handle both string and object cases
+        const notificationObj = typeof notification === 'string'
+          ? JSON.parse(notification)
+          : notification;
+        console.log('Processed notification:', notificationObj); // Debug log
+
+        if (notificationObj && notificationObj.type && notificationObj.message) {
+          switch (notificationObj.type) {
+            case "success":
+              toast.success(notificationObj.message);
+              setOpen(false);
+              fetchMemories();
+              break;
+            case "warning":
+              toast.warning(notificationObj.message);
+              // Don't close dialog or refresh for warnings
+              break;
+            case "error":
+              toast.error(notificationObj.message);
+              // Don't close dialog or refresh for errors
+              break;
+            case "info":
+              toast(notificationObj.message);
+              setOpen(false);
+              fetchMemories();
+              break;
+            default:
+              toast.success(notificationObj.message);
+              setOpen(false);
+              fetchMemories();
+          }
         }
-      } catch {
+      } catch (e) {
         // Fallback for plain string notifications
         console.log('Using fallback notification:', notification); // Debug log
-        toast.success(notification);
+        toast.success(typeof notification === 'string' ? notification : 'Memory created successfully');
         setOpen(false);
         fetchMemories();
       }

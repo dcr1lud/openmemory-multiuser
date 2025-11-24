@@ -95,7 +95,7 @@ interface UseMemoriesApiReturn {
   updateMemoryState: (memoryIds: string[], state: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  notification: string | null;
+  notification: { type: string; message: string } | null;
   hasUpdates: number;
   memories: Memory[];
   selectedMemory: SimpleMemory | null;
@@ -104,7 +104,7 @@ interface UseMemoriesApiReturn {
 export const useMemoriesApi = (): UseMemoriesApiReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: string; message: string } | null>(null);
   const [hasUpdates, setHasUpdates] = useState<number>(0);
   const dispatch = useDispatch<AppDispatch>();
   const user_id = useSelector((state: RootState) => state.profile.userId);
@@ -185,7 +185,7 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
         console.log('Memory creation failed, setting notification:', response.notification); // Debug log
         if (response.notification) {
           // Set notification for warning/error messages
-          setNotification(JSON.stringify(response.notification));
+          setNotification(response.notification);
         } else {
           // Fallback error message
           setError(response.message || 'Failed to create memory');
@@ -197,10 +197,10 @@ export const useMemoriesApi = (): UseMemoriesApiReturn => {
       // Success case
       console.log('Memory creation succeeded, setting notification:', response.notification); // Debug log
       if (response.notification) {
-        setNotification(JSON.stringify(response.notification));
+        setNotification(response.notification);
       } else {
         // Fallback for success
-        setNotification(JSON.stringify({ type: "success", message: "Memory created successfully" }));
+        setNotification({ type: "success", message: "Memory created successfully" });
       }
       setIsLoading(false);
 
