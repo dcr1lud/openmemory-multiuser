@@ -23,6 +23,50 @@ export function CreateMemoryDialog() {
   const [open, setOpen] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
+  // Show toast when notification changes
+  useEffect(() => {
+    if (notification) {
+      try {
+        // Handle both string and object cases
+        const notificationObj = typeof notification === 'string'
+          ? JSON.parse(notification)
+          : notification;
+
+        if (notificationObj && notificationObj.type && notificationObj.message) {
+          switch (notificationObj.type) {
+            case "success":
+              toast.success(notificationObj.message);
+              setOpen(false);
+              fetchMemories();
+              break;
+            case "warning":
+              toast.warning(notificationObj.message);
+              // Don't close dialog or refresh for warnings
+              break;
+            case "error":
+              toast.error(notificationObj.message);
+              // Don't close dialog or refresh for errors
+              break;
+            case "info":
+              toast(notificationObj.message);
+              setOpen(false);
+              fetchMemories();
+              break;
+            default:
+              toast.success(notificationObj.message);
+              setOpen(false);
+              fetchMemories();
+          }
+        }
+      } catch (e) {
+        // Fallback for plain string notifications
+        toast.success(typeof notification === 'string' ? notification : 'Memory created successfully');
+        setOpen(false);
+        fetchMemories();
+      }
+    }
+  }, [notification, fetchMemories]);
+
   const handleCreateMemory = async (text: string) => {
     await createMemory(text, () => setOpen(false));
     // Hook handles all toasts internally
