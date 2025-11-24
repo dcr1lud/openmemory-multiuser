@@ -130,8 +130,16 @@ class ApiService {
       text: content,
     });
 
-    // Always return the response data, let the hook handle success/failure
-    return response.data;
+    const data = response.data;
+    
+    // Check if the API response indicates failure
+    if (data.success === false) {
+      const error = new Error(data.message || 'Failed to create memory') as any;
+      error.response = { data };
+      throw error;
+    }
+
+    return data;
   }
 
   async deleteMemory(memoryId: string) {
