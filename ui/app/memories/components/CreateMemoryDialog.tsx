@@ -28,18 +28,32 @@ export function CreateMemoryDialog() {
     if (notification) {
       try {
         const notificationObj = JSON.parse(notification);
-        if (notificationObj.type === "success") {
-          toast.success(notificationObj.message);
-        } else {
-          // For info, warning, or other types, use basic success toast
-          toast.success(notificationObj.message);
+        switch (notificationObj.type) {
+          case "success":
+            toast.success(notificationObj.message);
+            setOpen(false);
+            fetchMemories();
+            break;
+          case "warning":
+            toast.warning(notificationObj.message);
+            // Don't close dialog or refresh for warnings
+            break;
+          case "info":
+            toast(notificationObj.message);
+            setOpen(false);
+            fetchMemories();
+            break;
+          default:
+            toast.success(notificationObj.message);
+            setOpen(false);
+            fetchMemories();
         }
       } catch {
         // Fallback for plain string notifications
         toast.success(notification);
+        setOpen(false);
+        fetchMemories();
       }
-      setOpen(false);
-      fetchMemories();
     }
   }, [notification, fetchMemories]);
 
